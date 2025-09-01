@@ -10,8 +10,8 @@ app = Flask(__name__)
 db = mysql.connector.connect(
     host="localhost",
     user="root",
-    password="your_password",
-    database="your_database"
+    password="1234",
+    database="recipe_db"
 )
 cursor = db.cursor(dictionary=True)
 
