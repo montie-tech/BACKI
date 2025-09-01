@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import requests
 import mysql.connector
 from mysql.connector import Error
+import socket
 
 app = Flask(__name__)
 
@@ -34,13 +35,12 @@ def ask():
         return jsonify({"error": "No input provided"}), 400
 
     try:
-        # Send request to third-party AI endpoint
         url = f"https://api.dreaded.site/api/chatgpt?text={user_input}"
         response = requests.get(url)
         response.raise_for_status()
         answer = response.text
 
-        # Try saving to MySQL if available
+        # Save to MySQL if available
         if db and cursor:
             try:
                 insert_query = "INSERT INTO chat_history (question, answer) VALUES (%s, %s)"
@@ -69,5 +69,25 @@ def history():
     else:
         return jsonify({"error": "Database not available"}), 503
 
+# ---------------------------
+# Helper: Find a free port
+# ---------------------------
+def find_free_port(default_port=5000):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.bind(('', default_port))
+        port = default_port
+    except OSError:
+        s.bind(('', 0))  # Bind to a random free port
+        port = s.getsockname()[1]
+    finally:
+        s.close()
+    return port
+
+# ---------------------------
+# Run app
+# ---------------------------
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = find_free_port(5000)
+    print(f"🚀 Flask server running on port {port}")
+    app.run(host="0.0.0.0", port=port, debug=True)
